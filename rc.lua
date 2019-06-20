@@ -49,7 +49,14 @@ local function run_once(cmd_arr)
     end
 end
 
-run_once({ "urxvtd", "unclutter -root" }) -- entries must be separated by commas
+run_once({ 
+  "unclutter -root",
+  "setxkbmap -layout 'us,ru' -option 'grp:caps_toggle'",
+  "xinput set-prop 13 288 1",
+  "google-chrome",
+  "skypeforlinux",
+  "telegram-desktop",
+}) -- entries must be separated by commas
 
 -- This function implements the XDG autostart specification
 --[[
@@ -63,28 +70,31 @@ awful.spawn.with_shell(
 
 -- }}}
 
+prt = function(...) naughty.notify{text='Result: ' .. table.concat({...}, '\t')} end
+
+
 -- {{{ Variable definitions
 
 local modkey       = "Mod4"
 local altkey       = "Mod1"
-local terminal     = "urxvtc"
+local terminal     = "kitty"
 local editor       = os.getenv("EDITOR") or "vim"
 local browser      = "google-chrome"
 local guieditor    = "code"
 local scrlocker    = "slock"
 
 awful.util.terminal = terminal
-awful.util.tagnames = { "1", "2", "3", "4", "5" }
+awful.util.tagnames = { "α", "β", "γ", "δ", "φ", "χ", "ψ", "ω" }
 awful.layout.layouts = {
     awful.layout.suit.floating,
-   --awful.layout.suit.tile,
+    awful.layout.suit.tile,
     awful.layout.suit.tile.left,
     awful.layout.suit.tile.bottom,
     awful.layout.suit.tile.top,
-    --awful.layout.suit.fair,
-    --awful.layout.suit.fair.horizontal,
-    --awful.layout.suit.spiral,
-    --awful.layout.suit.spiral.dwindle,
+    awful.layout.suit.fair,
+    awful.layout.suit.fair.horizontal,
+    awful.layout.suit.spiral,
+    awful.layout.suit.spiral.dwindle,
     --awful.layout.suit.max,
     --awful.layout.suit.max.fullscreen,
     --awful.layout.suit.magnifier,
@@ -220,11 +230,11 @@ root.buttons(my_table.join(
 globalkeys = my_table.join(
     -- Take a screenshot
     -- https://github.com/lcpz/dots/blob/master/bin/screenshot
-    awful.key({ altkey }, "p", function() os.execute("maim -so | xclip -selection clipboard -t image/png") end,
+    awful.key({ modkey }, "Print", function() os.execute("maim -so | xclip -selection clipboard -t image/png") end,
               {description = "take a screenshot", group = "hotkeys"}),
 
     -- X screen locker
-    awful.key({ altkey, "Control" }, "l", function () os.execute(scrlocker) end,
+    awful.key({ modkey, "Control" }, "l", function () os.execute(scrlocker) end,
               {description = "lock screen", group = "hotkeys"}),
 
     -- Hotkeys
@@ -245,18 +255,18 @@ globalkeys = my_table.join(
               {description = "view  previous nonempty", group = "tag"}),
 
     -- Default client focus
-    awful.key({ altkey,           }, "j",
-        function ()
-            awful.client.focus.byidx( 1)
-        end,
-        {description = "focus next by index", group = "client"}
-    ),
-    awful.key({ altkey,           }, "k",
-        function ()
-            awful.client.focus.byidx(-1)
-        end,
-        {description = "focus previous by index", group = "client"}
-    ),
+    -- awful.key({ altkey,           }, "j",
+    --     function ()
+    --         awful.client.focus.byidx( 1)
+    --     end,
+    --     {description = "focus next by index", group = "client"}
+    -- ),
+    -- awful.key({ altkey,           }, "k",
+    --     function ()
+    --         awful.client.focus.byidx(-1)
+    --     end,
+    --     {description = "focus previous by index", group = "client"}
+    -- ),
 
     -- By direction client focus
     awful.key({ modkey }, "j",
@@ -305,6 +315,10 @@ globalkeys = my_table.join(
             end
         end,
         {description = "go back", group = "client"}),
+
+    awful.key({ modkey }, "F1", function () awful.screen.focus(1) end),
+    awful.key({ modkey }, "F2", function () awful.screen.focus(2) end),
+    awful.key({ modkey }, "F3", function () awful.screen.focus(3) end),
 
     -- Show/Hide Wibox
     awful.key({ modkey, altkey }, "b", function ()
@@ -370,8 +384,8 @@ globalkeys = my_table.join(
               {description = "dropdown application", group = "launcher"}),
 
     -- Widgets popups
-    awful.key({ altkey, }, "c", function () if beautiful.cal then beautiful.cal.show(7) end end,
-              {description = "show calendar", group = "widgets"}),
+    -- awful.key({ altkey, }, "c", function () if beautiful.cal then beautiful.cal.show(7) end end,
+    --           {description = "show calendar", group = "widgets"}),
     --awful.key({ altkey, }, "h", function () if beautiful.fs then beautiful.fs.show(7) end end,
     --          {description = "show filesystem", group = "widgets"}),
     --awful.key({ altkey, }, "w", function () if beautiful.weather then beautiful.weather.show(7) end end,
@@ -402,12 +416,12 @@ globalkeys = my_table.join(
             beautiful.volume.update()
         end,
         {description = "toggle mute", group = "hotkeys"}),
-    awful.key({ altkey, "Control" }, "m",
-        function ()
-            os.execute(string.format("amixer -q set %s 100%%", beautiful.volume.channel))
-            beautiful.volume.update()
-        end,
-        {description = "volume 100%", group = "hotkeys"}),
+    -- awful.key({ altkey, "Control" }, "m",
+    --     function ()
+    --         os.execute(string.format("amixer -q set %s 100%%", beautiful.volume.channel))
+    --         beautiful.volume.update()
+    --     end,
+    --     {description = "volume 100%", group = "hotkeys"}),
     awful.key({ altkey, "Control" }, "0",
         function ()
             os.execute(string.format("amixer -q set %s 0%%", beautiful.volume.channel))
@@ -428,7 +442,7 @@ globalkeys = my_table.join(
     awful.key({ modkey }, "a", function () awful.spawn(guieditor) end,
               {description = "run gui editor", group = "launcher"}),
 
-    awful.key({ modkey }, "r", function () awful.spawn("rofi -show combi -bw 4 -eh 1 -opacity 80 -lines 10 -line-margin 4 -width 50") end,
+    awful.key({ modkey }, "r", function () awful.spawn("rofi -show combi -bw 4 -eh 1 -opacity 80 -lines 10 -line-margin 4 -width 40") end,
               {description = "run or switch to"}),
 
 
@@ -568,7 +582,7 @@ root.keys(globalkeys)
 -- Rules to apply to new clients (through the "manage" signal).
 awful.rules.rules = {
     -- All clients will match this rule.
-    { rule = { },
+    { rule = {  },
       properties = { border_width = beautiful.border_width,
                      border_color = beautiful.border_normal,
                      focus = awful.client.focus.filter,
@@ -577,20 +591,42 @@ awful.rules.rules = {
                      buttons = clientbuttons,
                      screen = awful.screen.preferred,
                      placement = awful.placement.no_overlap+awful.placement.no_offscreen,
-                     size_hints_honor = false
+                     size_hints_honor = false,
+            		     titlebars_enabled = false
      }
     },
 
     -- Titlebars
-    { rule_any = { type = { "dialog", "normal" } },
+    { rule_any = { type = { "dialog" } },
       properties = { titlebars_enabled = true } },
 
-    -- Set Firefox to always map on the first tag on screen 1.
-    { rule = { class = "Firefox" },
-      properties = { screen = 1, tag = awful.util.tagnames[1] } },
+    -- { rule = { class = "Firefox" },
+    --   properties = { screen = 1, tag = awful.util.tagnames[3] } },
 
     { rule = { class = "Gimp", role = "gimp-image-window" },
           properties = { maximized = true } },
+
+    { rule = { class = "Google-chrome" },
+      properties = { screen = 2, tag = awful.util.tagnames[2] } },
+
+    { rule = { class = "TelegramDesktop" },
+      properties = { screen = 2, tag = awful.util.tagnames[3] } },
+
+    { rule = { class = "Thunderbird" },
+      properties = { screen = 2, tag = awful.util.tagnames[4] } },
+
+    { rule = { class = "Peek" }, properties = { floating = true } },
+
+    { rule = { class = "Skype" },
+      properties = { screen = 2, tag = awful.util.tagnames[3] } },
+
+    { rule = { name = "win%d+", class = "jetbrains-idea"},
+      properties = { titlebars_enabled = false, border_width = 0, floating = true } },
+
+    { rule = { class = "jetbrains-idea"},
+      properties = { titlebars_enabled = false, border_width = 0, screen = 3} }
+
+
 }
 -- }}}
 
@@ -599,7 +635,7 @@ awful.rules.rules = {
 client.connect_signal("manage", function (c)
     -- Set the windows at the slave,
     -- i.e. put it at the end of others instead of setting it master.
-    -- if not awesome.startup then awful.client.setslave(c) end
+    if not awesome.startup then awful.client.setslave(c) end
 
     if awesome.startup and
       not c.size_hints.user_position

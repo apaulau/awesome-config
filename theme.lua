@@ -13,15 +13,28 @@ local wibox = require("wibox")
 local os = os
 local my_table = awful.util.table or gears.table -- 4.{0,1} compatibility
 
+local rrect = function(radius)
+		return 	function(cr, width, height)
+			  gears.shape.rounded_rect(cr, width, height, radius)
+			end
+	      end
+
 local theme                                     = {}
 theme.confdir                                   = os.getenv("HOME") .. "/.config/awesome"
 theme.wallpaper                                 = theme.confdir .. "/wall.png"
-theme.font                                      = "Terminus 10"
-theme.menu_bg_normal                            = "#000000"
-theme.menu_bg_focus                             = "#000000"
-theme.bg_normal                                 = "#000000"
-theme.bg_focus                                  = "#000000"
-theme.bg_urgent                                 = "#000000"
+theme.font                                      = "Terminus 12"
+theme.hotkeys_font                              = "Fantasque Sans Mono 12"
+theme.hotkeys_description_font                  = "Fantasque Sans Mono 10"
+theme.hotkeys_bg                                = "#000000dd"
+theme.notification_font				= "Fantasque Sans Mono 12"
+theme.notification_shape			= rrect(8) 
+theme.notification_bg				= "#00000090" 
+theme.notification_fg				= "#ffffff" 
+theme.notification_margin			= 50
+theme.notification_icon_size			= 64
+theme.bg_normal                                 = "#00000085"
+theme.bg_focus                                  = "#00000085"
+theme.bg_urgent                                 = "#00000085"
 theme.fg_normal                                 = "#aaaaaa"
 theme.fg_focus                                  = "#ff8c00"
 theme.fg_urgent                                 = "#af1d18"
@@ -30,8 +43,10 @@ theme.border_width                              = 1
 theme.border_normal                             = "#1c2022"
 theme.border_focus                              = "#606060"
 theme.border_marked                             = "#3ca4d8"
+theme.menu_bg_normal                            = "#000000"
+theme.menu_bg_focus                             = "#000000"
 theme.menu_border_width                         = 0
-theme.menu_width                                = 130
+theme.menu_width                                = 230
 theme.menu_submenu_icon                         = theme.confdir .. "/icons/submenu.png"
 theme.menu_fg_normal                            = "#aaaaaa"
 theme.menu_fg_focus                             = "#ff8c00"
@@ -55,7 +70,7 @@ theme.taglist_squares_sel                       = theme.confdir .. "/icons/squar
 theme.taglist_squares_unsel                     = theme.confdir .. "/icons/square_b.png"
 theme.tasklist_plain_task_name                  = true
 theme.tasklist_disable_icon                     = true
-theme.useless_gap                               = 0
+theme.useless_gap                               = 2
 theme.layout_tile                               = theme.confdir .. "/icons/tile.png"
 theme.layout_tilegaps                           = theme.confdir .. "/icons/tilegaps.png"
 theme.layout_tileleft                           = theme.confdir .. "/icons/tileleft.png"
@@ -262,7 +277,7 @@ function theme.at_screen_connect(s)
     gears.wallpaper.maximized(wallpaper, s, true)
 
     -- Tags
-    awful.tag(awful.util.tagnames, s, awful.layout.layouts)
+    awful.tag(awful.util.tagnames, s, awful.layout.layouts[2])
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
@@ -291,12 +306,11 @@ function theme.at_screen_connect(s)
             layout = wibox.layout.fixed.horizontal,
             s.mytaglist,
             s.mypromptbox,
-	    s.mytasklist,
             --mpdicon,
             --theme.mpd.widget,
         },
-        --s.mytasklist, -- Middle widget
-        nil,
+        s.mytasklist, -- Middle widget
+        --nil,
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
             wibox.widget.systray(),

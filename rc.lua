@@ -7,7 +7,7 @@ local awful         = require("awful")
                       require("awful.autofocus")
 local wibox         = require("wibox")
 local beautiful     = require("beautiful")
-local naughty       = require("naughty")
+--local naughty       = require("naughty")
 local lain          = require("lain")
 --local menubar       = require("menubar")
 local freedesktop   = require("freedesktop")
@@ -15,6 +15,12 @@ local hotkeys_popup = require("awful.hotkeys_popup").widget
                       require("awful.hotkeys_popup.keys")
 local my_table      = awful.util.table or gears.table -- 4.{0,1} compatibility
 -- }}}
+
+
+local _dbus = dbus; dbus = nil
+local naughty = require("naughty")
+dbus = _dbus
+
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -54,8 +60,10 @@ run_once({
   "setxkbmap -layout 'us,ru' -option 'grp:caps_toggle'",
   "xinput set-prop 13 288 1",
   "google-chrome",
-  "skypeforlinux",
+  --"skypeforlinux",
   "telegram-desktop",
+  "slack",
+  "workrave"
 }) -- entries must be separated by commas
 
 -- This function implements the XDG autostart specification
@@ -77,7 +85,7 @@ prt = function(...) naughty.notify{text='Result: ' .. table.concat({...}, '\t')}
 
 local modkey       = "Mod4"
 local altkey       = "Mod1"
-local terminal     = "kitty"
+local terminal     = "alacritty"
 local editor       = os.getenv("EDITOR") or "vim"
 local browser      = "google-chrome"
 local guieditor    = "code"
@@ -230,11 +238,14 @@ root.buttons(my_table.join(
 globalkeys = my_table.join(
     -- Take a screenshot
     -- https://github.com/lcpz/dots/blob/master/bin/screenshot
-    awful.key({ modkey }, "Print", function() os.execute("maim -so | xclip -selection clipboard -t image/png") end,
+    awful.key({ }, "Print", function() os.execute("maim -so | xclip -selection clipboard -t image/png") end,
+              {description = "take a screenshot", group = "hotkeys"}),
+    awful.key({ modkey }, "Print", function() os.execute("maim -so ~/Pictures/screenshot-$(date +%s).png") end,
               {description = "take a screenshot", group = "hotkeys"}),
 
+
     -- X screen locker
-    awful.key({ modkey, "Control" }, "l", function () os.execute(scrlocker) end,
+    awful.key({ }, "Pause", function () os.execute(scrlocker) end,
               {description = "lock screen", group = "hotkeys"}),
 
     -- Hotkeys
@@ -332,6 +343,7 @@ globalkeys = my_table.join(
         {description = "toggle wibox", group = "awesome"}),
 
     -- Dynamic tagging
+    --[[
     awful.key({ modkey, "Shift" }, "n", function () lain.util.add_tag() end,
               {description = "add new tag", group = "tag"}),
     awful.key({ modkey, "Shift" }, "r", function () lain.util.rename_tag() end,
@@ -342,6 +354,7 @@ globalkeys = my_table.join(
               {description = "move tag to the right", group = "tag"}),
     awful.key({ modkey, "Shift" }, "d", function () lain.util.delete_tag() end,
               {description = "delete tag", group = "tag"}),
+    --]]
 
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.spawn(terminal) end,
@@ -363,9 +376,9 @@ globalkeys = my_table.join(
     {description = "increase the number of columns", group = "layout"}),
     awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1, nil, true)    end,
               {description = "decrease the number of columns", group = "layout"}),
-    awful.key({ modkey,           }, "space", function () awful.layout.inc( 1)                end,
+    awful.key({ modkey,           }, ".", function () awful.layout.inc( 1)                end,
               {description = "select next", group = "layout"}),
-    awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(-1)                end,
+    awful.key({ modkey            }, ",", function () awful.layout.inc(-1)                end,
               {description = "select previous", group = "layout"}),
 
     awful.key({ modkey, "Control" }, "n",
@@ -400,19 +413,22 @@ globalkeys = my_table.join(
     -- ALSA volume control
     awful.key({ }, "XF86AudioRaiseVolume",
         function ()
-            os.execute(string.format("amixer -q set %s 1%%+", beautiful.volume.channel))
+            --os.execute(string.format("amixer -q set %s 1%%+", beautiful.volume.channel))
+            awful.spawn("volume.sh up")
             beautiful.volume.update()
         end,
         {description = "volume up", group = "hotkeys"}),
     awful.key({ }, "XF86AudioLowerVolume",
         function ()
-            os.execute(string.format("amixer -q set %s 1%%-", beautiful.volume.channel))
+            --os.execute(string.format("amixer -q set %s 1%%-", beautiful.volume.channel))
+            awful.spawn("volume.sh down")
             beautiful.volume.update()
         end,
         {description = "volume down", group = "hotkeys"}),
     awful.key({ }, "XF86AudioMute",
         function ()
-            os.execute(string.format("amixer -q set %s toggle", beautiful.volume.togglechannel or beautiful.volume.channel))
+            --os.execute(string.format("amixer -q set %s toggle", beautiful.volume.togglechannel or beautiful.volume.channel))
+            awful.spawn("volume.sh mute")
             beautiful.volume.update()
         end,
         {description = "toggle mute", group = "hotkeys"}),
@@ -422,12 +438,12 @@ globalkeys = my_table.join(
     --         beautiful.volume.update()
     --     end,
     --     {description = "volume 100%", group = "hotkeys"}),
-    awful.key({ altkey, "Control" }, "0",
+    --[[awful.key({ altkey, "Control" }, "0",
         function ()
             os.execute(string.format("amixer -q set %s 0%%", beautiful.volume.channel))
             beautiful.volume.update()
         end,
-        {description = "volume 0%", group = "hotkeys"}),
+        {description = "volume 0%", group = "hotkeys"}),--]]
 
     -- Copy primary to clipboard (terminals to gtk)
     awful.key({ modkey }, "c", function () awful.spawn.with_shell("xsel | xsel -i -b") end,
@@ -442,8 +458,13 @@ globalkeys = my_table.join(
     awful.key({ modkey }, "a", function () awful.spawn(guieditor) end,
               {description = "run gui editor", group = "launcher"}),
 
-    awful.key({ modkey }, "r", function () awful.spawn("rofi -show combi -bw 4 -eh 1 -opacity 80 -lines 10 -line-margin 4 -width 40") end,
+    awful.key({ modkey }, "space", function () awful.spawn("rofi -combi-modi window,drun,ssh -show combi -bw 4 -eh 1 -opacity 80 -lines 10 -line-margin 4 -width 40") end,
               {description = "run or switch to"}),
+
+    awful.key({ modkey }, "=", function () awful.spawn("=") end,
+              {description = "open calculator"})
+
+
 
 
     -- Default
@@ -455,6 +476,7 @@ globalkeys = my_table.join(
     --awful.key({ modkey }, "r", function () awful.screen.focused().mypromptbox:run() end,
     --          {description = "run prompt", group = "launcher"}),
 
+    --[[
     awful.key({ modkey }, "x",
               function ()
                   awful.prompt.run {
@@ -485,6 +507,13 @@ clientkeys = my_table.join(
               {description = "move to master", group = "client"}),
     awful.key({ modkey,           }, "o",      function (c) c:move_to_screen()               end,
               {description = "move to screen", group = "client"}),
+    awful.key({ modkey, "Shift"   }, "F1",      function (c) c:move_to_screen(1)               end,
+              {description = "move to screen", group = "client"}),
+    awful.key({ modkey, "Shift"   }, "F2",      function (c) c:move_to_screen(2)               end,
+              {description = "move to screen", group = "client"}),
+    awful.key({ modkey, "Shift"   }, "F3",      function (c) c:move_to_screen(3)               end,
+              {description = "move to screen", group = "client"}),
+
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end,
               {description = "toggle keep on top", group = "client"}),
     awful.key({ modkey,           }, "n",
@@ -624,8 +653,10 @@ awful.rules.rules = {
       properties = { titlebars_enabled = false, border_width = 0, floating = true } },
 
     { rule = { class = "jetbrains-idea"},
-      properties = { titlebars_enabled = false, border_width = 0, screen = 3} }
+      properties = { titlebars_enabled = false, border_width = 0, screen = 1} },
 
+    { rule = { class = "jetbrains-.*", instance = "sun-awt-X11-XWindowPeer",  name = "win.*" },
+      properties = { floating = true, focus = true, focusable = false, ontop = true, placement = awful.placement.restore, buttons = {} } },
 
 }
 -- }}}

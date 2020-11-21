@@ -14,9 +14,10 @@ local freedesktop   = require("freedesktop")
 local hotkeys_popup = require("awful.hotkeys_popup").widget
                       require("awful.hotkeys_popup.keys")
 local my_table      = awful.util.table or gears.table -- 4.{0,1} compatibility
+local dpi           = require("beautiful.xresources").apply_dpi
 -- }}}
 
-
+-- Disable naughty notifications in favor of dunst
 local _dbus = dbus; dbus = nil
 local naughty = require("naughty")
 dbus = _dbus
@@ -55,15 +56,17 @@ local function run_once(cmd_arr)
     end
 end
 
+awful.screen.set_auto_dpi_enabled( true )
+
 run_once({ 
-  "unclutter -root",
-  "setxkbmap -layout 'us,ru' -option 'grp:caps_toggle'",
-  "xinput set-prop 13 288 1",
-  "google-chrome",
+  --"unclutter -root",
+  --"setxkbmap -layout 'us,ru' -option 'grp:caps_toggle'",
+  --"xinput set-prop 13 288 1",
+  --"google-chrome",
   --"skypeforlinux",
-  "telegram-desktop",
-  "slack",
-  "workrave"
+  --"telegram-desktop",
+  --"slack",
+  --"workrave"
 }) -- entries must be separated by commas
 
 -- This function implements the XDG autostart specification
@@ -86,6 +89,8 @@ prt = function(...) naughty.notify{text='Result: ' .. table.concat({...}, '\t')}
 local modkey       = "Mod4"
 local altkey       = "Mod1"
 local terminal     = "alacritty"
+local vi_focus     = false -- vi-like client focus - https://github.com/lcpz/awesome-copycats/issues/275
+local cycle_prev   = true -- cycle trough all previous client or just the first -- https://github.com/lcpz/awesome-copycats/issues/274
 local editor       = os.getenv("EDITOR") or "vim"
 local browser      = "google-chrome"
 local guieditor    = "code"
@@ -163,7 +168,7 @@ awful.util.tasklist_buttons = my_table.join(
                 instance:hide()
                 instance = nil
             else
-                instance = awful.menu.clients({theme = {width = 250}})
+                instance = awful.menu.clients({theme = {width = dpi(250)}})
             end
         end
     end),
@@ -175,9 +180,9 @@ lain.layout.termfair.nmaster           = 3
 lain.layout.termfair.ncol              = 1
 lain.layout.termfair.center.nmaster    = 3
 lain.layout.termfair.center.ncol       = 1
-lain.layout.cascade.tile.offset_x      = 2
-lain.layout.cascade.tile.offset_y      = 32
-lain.layout.cascade.tile.extra_padding = 5
+lain.layout.cascade.tile.offset_x      = dpi(2)
+lain.layout.cascade.tile.offset_y      = dpi(32)
+lain.layout.cascade.tile.extra_padding = dpi(5)
 lain.layout.cascade.tile.nmaster       = 5
 lain.layout.cascade.tile.ncol          = 2
 
@@ -193,7 +198,7 @@ local myawesomemenu = {
     { "quit", function() awesome.quit() end }
 }
 awful.util.mymainmenu = freedesktop.menu.build({
-    icon_size = beautiful.menu_height or 16,
+    icon_size = beautiful.menu_height or dpi(16),
     before = {
         { "Awesome", myawesomemenu, beautiful.awesome_icon },
         -- other triads can be put here
@@ -222,6 +227,18 @@ screen.connect_signal("property::geometry", function(s)
         gears.wallpaper.maximized(wallpaper, s, true)
     end
 end)
+
+-- No borders when rearranging only 1 non-floating or maximized client
+screen.connect_signal("arrange", function (s)
+    local only_one = #s.tiled_clients == 1
+    for _, c in pairs(s.clients) do
+        if only_one and not c.floating or c.maximized then
+            c.border_width = 0
+        else
+            c.border_width = beautiful.border_width
+        end
+    end
+end)
 -- Create a wibox for each screen and add it
 awful.screen.connect_for_each_screen(function(s) beautiful.at_screen_connect(s) end)
 -- }}}
@@ -242,7 +259,6 @@ globalkeys = my_table.join(
               {description = "take a screenshot", group = "hotkeys"}),
     awful.key({ modkey }, "Print", function() os.execute("maim -so ~/Pictures/screenshot-$(date +%s).png") end,
               {description = "take a screenshot", group = "hotkeys"}),
-
 
     -- X screen locker
     awful.key({ }, "Pause", function () os.execute(scrlocker) end,
@@ -405,9 +421,9 @@ globalkeys = my_table.join(
     --          {description = "show weather", group = "widgets"}),
 
     -- Brightness
-    awful.key({ }, "XF86MonBrightnessUp", function () os.execute("xbacklight -inc 10") end,
+    awful.key({ }, "XF86MonBrightnessUp", function () os.execute("bright.sh +") end,
               {description = "+10%", group = "hotkeys"}),
-    awful.key({ }, "XF86MonBrightnessDown", function () os.execute("xbacklight -dec 10") end,
+    awful.key({ }, "XF86MonBrightnessDown", function () os.execute("bright.sh -") end,
               {description = "-10%", group = "hotkeys"}),
 
     -- ALSA volume control
@@ -611,7 +627,7 @@ root.keys(globalkeys)
 -- Rules to apply to new clients (through the "manage" signal).
 awful.rules.rules = {
     -- All clients will match this rule.
-    { rule = {  },
+    { rule = { },
       properties = { border_width = beautiful.border_width,
                      border_color = beautiful.border_normal,
                      focus = awful.client.focus.filter,
@@ -621,7 +637,7 @@ awful.rules.rules = {
                      screen = awful.screen.preferred,
                      placement = awful.placement.no_overlap+awful.placement.no_offscreen,
                      size_hints_honor = false,
-            		     titlebars_enabled = false
+            		 titlebars_enabled = false
      }
     },
 
@@ -636,18 +652,12 @@ awful.rules.rules = {
           properties = { maximized = true } },
 
     { rule = { class = "Google-chrome" },
-      properties = { screen = 2, tag = awful.util.tagnames[2] } },
+      properties = { screen = 1, tag = awful.util.tagnames[2] } },
 
     { rule = { class = "TelegramDesktop" },
-      properties = { screen = 2, tag = awful.util.tagnames[3] } },
-
-    { rule = { class = "Thunderbird" },
-      properties = { screen = 2, tag = awful.util.tagnames[4] } },
+      properties = { screen = 1, tag = awful.util.tagnames[3] } },
 
     { rule = { class = "Peek" }, properties = { floating = true } },
-
-    { rule = { class = "Skype" },
-      properties = { screen = 2, tag = awful.util.tagnames[3] } },
 
     { rule = { name = "win%d+", class = "jetbrains-idea"},
       properties = { titlebars_enabled = false, border_width = 0, floating = true } },
@@ -666,7 +676,7 @@ awful.rules.rules = {
 client.connect_signal("manage", function (c)
     -- Set the windows at the slave,
     -- i.e. put it at the end of others instead of setting it master.
-    if not awesome.startup then awful.client.setslave(c) end
+    -- if not awesome.startup then awful.client.setslave(c) end
 
     if awesome.startup and
       not c.size_hints.user_position
@@ -698,7 +708,7 @@ client.connect_signal("request::titlebars", function(c)
         end)
     )
 
-    awful.titlebar(c, {size = 16}) : setup {
+    awful.titlebar(c, {size = dpi(16)}) : setup {
         { -- Left
             --awful.titlebar.widget.iconwidget(c),
             buttons = buttons,
@@ -726,7 +736,7 @@ end)
 
 -- Enable sloppy focus, so that focus follows mouse.
 client.connect_signal("mouse::enter", function(c)
-    c:emit_signal("request::activate", "mouse_enter", {raise = true})
+    c:emit_signal("request::activate", "mouse_enter", {raise = vi_focus})
 end)
 
 -- No border for maximized clients

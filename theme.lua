@@ -9,6 +9,7 @@ local gears = require("gears")
 local lain  = require("lain")
 local awful = require("awful")
 local wibox = require("wibox")
+local dpi   = require("beautiful.xresources").apply_dpi
 
 local os = os
 local my_table = awful.util.table or gears.table -- 4.{0,1} compatibility
@@ -21,37 +22,37 @@ end
 
 local theme                                     = {}
 theme.confdir                                   = os.getenv("HOME") .. "/.config/awesome"
-theme.wallpaper                                 = theme.confdir .. "/wall.png"
-theme.font                                      = "Fantasque Sans Mono 12"
-theme.hotkeys_font                              = "Fantasque Sans Mono 12"
-theme.hotkeys_description_font                  = "Fantasque Sans Mono 10"
-theme.hotkeys_bg                                = "#000000dd"
-theme.notification_font		                  		= "Fantasque Sans Mono 12"
-theme.notification_shape                  			= rrect(8) 
-theme.notification_bg				                    = "#00000090" 
-theme.notification_fg				                    = "#ffffff" 
-theme.notification_margin			                  = 50
-theme.notification_icon_size			              = 64
-theme.bg_normal                                 = "#00000085"
-theme.bg_focus                                  = "#00000085"
-theme.bg_urgent                                 = "#00000085"
+theme.wallpaper                                 = theme.confdir .. "/wall.jpg"
+theme.font                                      = "Iosevka 10"
+theme.bg_normal                                 = "#000000aa"
+theme.bg_focus                                  = "#000000aa"
+theme.bg_urgent                                 = "#000000aa"
 theme.fg_normal                                 = "#aaaaaa"
 theme.fg_focus                                  = "#ffffff"
 theme.fg_urgent                                 = "#ff00ac"
 theme.fg_minimize                               = "#656565"
-theme.border_width                              = 2
+theme.border_width                              = dpi(1)
 theme.border_normal                             = "#1c2022"
 theme.border_focus                              = "#00b4ff"
 theme.border_marked                             = "#006dff"
-theme.menu_bg_normal                            = "#000000"
-theme.menu_bg_focus                             = "#000000"
 theme.menu_border_width                         = 0
-theme.menu_width                                = 300
+theme.menu_width                                = dpi(130)
 theme.menu_submenu_icon                         = theme.confdir .. "/icons/submenu.png"
 theme.menu_fg_normal                            = "#ffffff"
 theme.menu_fg_focus                             = "#00b4ff"
-theme.menu_bg_normal                            = "#05050585"
-theme.menu_bg_focus                             = "#05050585"
+theme.menu_bg_normal                            = "#050505dd"
+theme.menu_bg_focus                             = "#050505dd"
+
+theme.hotkeys_font                              = "Iosevka 10"
+theme.hotkeys_description_font                  = "Iosevka 8"
+theme.hotkeys_bg                                = "#000000dd"
+theme.notification_font		                    = "Iosevka 10"
+theme.notification_shape                  		= rrect(8)
+theme.notification_bg				            = "#00000090"
+theme.notification_fg				            = "#ffffff"
+theme.notification_margin			            = 50
+theme.notification_icon_size			        = 64
+
 theme.widget_temp                               = theme.confdir .. "/icons/temp.png"
 theme.widget_uptime                             = theme.confdir .. "/icons/ac.png"
 theme.widget_cpu                                = theme.confdir .. "/icons/cpu.png"
@@ -119,8 +120,8 @@ tztextclock.font = theme.font
 theme.cal = lain.widget.cal({
     attach_to = { mytextclock },
     notification_preset = {
-        font = "Fantasque Sans Mono 16",
-        fg   = "#ffffff",
+        font = "Iosevka 16",
+        fg   = theme.fg_normal,
         bg   = theme.bg_normal
     }
 })
@@ -142,7 +143,7 @@ theme.weather = lain.widget.weather({
 --[[ commented because it needs Gio/Glib >= 2.54
 local fsicon = wibox.widget.imagebox(theme.widget_fs)
 theme.fs = lain.widget.fs({
-    notification_preset = { font = "xos4 Terminus 10", fg = theme.fg_normal },
+    notification_preset = { font = "Terminus 10", fg = theme.fg_normal },
     settings  = function()
         widget:set_markup(markup.fontfg(theme.font, "#80d9d8", string.format("%.1f", fs_now["/"].used) .. "% "))
     end
@@ -279,7 +280,7 @@ function theme.at_screen_connect(s)
     gears.wallpaper.maximized(wallpaper, s, true)
 
     -- Tags
-    awful.tag(awful.util.tagnames, s, awful.layout.layouts[2])
+    awful.tag(awful.util.tagnames, s, awful.layout.layouts)
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
@@ -299,13 +300,14 @@ function theme.at_screen_connect(s)
     s.mytasklist = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, awful.util.tasklist_buttons)
 
     -- Create the wibox
-    s.mywibox = awful.wibar({ position = "top", screen = s, height = 20, bg = theme.bg_normal, fg = theme.fg_normal })
+    s.mywibox = awful.wibar({ position = "top", screen = s, height = dpi(19), bg = theme.bg_normal, fg = theme.fg_normal })
 
     -- Add widgets to the wibox
     s.mywibox:setup {
         layout = wibox.layout.align.horizontal,
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
+            --s.mylayoutbox,
             s.mytaglist,
             s.mypromptbox,
             --mpdicon,
@@ -332,11 +334,11 @@ function theme.at_screen_connect(s)
             --theme.fs.widget,
             --weathericon,
             --theme.weather.widget,
-            --tempicon,
-            --temp.widget,
-            --baticon,
-            --bat.widget,
-            --clockicon,
+            tempicon,
+            temp.widget,
+            baticon,
+            bat.widget,
+            clockicon,
             mytextclock,
             tztextclock,
             s.mylayoutbox,

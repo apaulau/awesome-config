@@ -12,4 +12,4 @@
 	url = https://github.com/mova/awmic.git
 [submodule "nice"]
 	path = nice
-	url = https://github.com/mut-ex/awesome-wm-nice.git
+	url = https://github.com/apaulau/awesome-wm-nice.git

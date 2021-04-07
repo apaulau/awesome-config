@@ -24,6 +24,7 @@ local theme                                     = {}
 theme.confdir                                   = os.getenv("HOME") .. "/.config/awesome"
 theme.wallpaper                                 = theme.confdir .. "/wall.jpg"
 theme.font                                      = "Iosevka 10"
+
 theme.bg_normal                                 = "#000000aa"
 theme.bg_focus                                  = "#000000aa"
 theme.bg_urgent                                 = "#000000aa"
@@ -31,10 +32,12 @@ theme.fg_normal                                 = "#aaaaaa"
 theme.fg_focus                                  = "#ffffff"
 theme.fg_urgent                                 = "#ff00ac"
 theme.fg_minimize                               = "#656565"
-theme.border_width                              = dpi(1)
+
+theme.border_width                              = dpi(0)
 theme.border_normal                             = "#1c2022"
 theme.border_focus                              = "#00b4ff"
 theme.border_marked                             = "#006dff"
+
 theme.menu_border_width                         = 0
 theme.menu_width                                = dpi(130)
 theme.menu_submenu_icon                         = theme.confdir .. "/icons/submenu.png"
@@ -43,15 +46,23 @@ theme.menu_fg_focus                             = "#00b4ff"
 theme.menu_bg_normal                            = "#050505dd"
 theme.menu_bg_focus                             = "#050505dd"
 
+theme.systray_icon_spacing = dpi(2)
+
+theme.tasklist_bg_normal                        = "#FFFFFF00"
+theme.tasklist_bg_focus                         = "#00000080"
+theme.tasklist_plain_task_name                  = true
+theme.tasklist_disable_icon                     = true
+
 theme.hotkeys_font                              = "Iosevka 10"
 theme.hotkeys_description_font                  = "Iosevka 8"
-theme.hotkeys_bg                                = "#000000dd"
-theme.notification_font		                    = "Iosevka 10"
-theme.notification_shape                  		= rrect(8)
-theme.notification_bg				            = "#00000090"
-theme.notification_fg				            = "#ffffff"
-theme.notification_margin			            = 50
-theme.notification_icon_size			        = 64
+theme.hotkeys_bg                                = "#000000CC"
+
+theme.notification_font		                      = "Iosevka 10"
+theme.notification_shape                      	= rrect(8)
+theme.notification_bg				                    = "#00000090"
+theme.notification_fg				                    = "#ffffff"
+theme.notification_margin			                  = 50
+theme.notification_icon_size			              = 64
 
 theme.widget_temp                               = theme.confdir .. "/icons/temp.png"
 theme.widget_uptime                             = theme.confdir .. "/icons/ac.png"
@@ -69,9 +80,7 @@ theme.widget_clock                              = theme.confdir .. "/icons/clock
 theme.widget_vol                                = theme.confdir .. "/icons/spkr.png"
 theme.taglist_squares_sel                       = theme.confdir .. "/icons/square_a.png"
 theme.taglist_squares_unsel                     = theme.confdir .. "/icons/square_b.png"
-theme.tasklist_plain_task_name                  = false
-theme.tasklist_disable_icon                     = true
-theme.useless_gap                               = 3
+theme.useless_gap                               = 2
 theme.layout_tile                               = theme.confdir .. "/icons/tile.png"
 theme.layout_tilegaps                           = theme.confdir .. "/icons/tilegaps.png"
 theme.layout_tileleft                           = theme.confdir .. "/icons/tileleft.png"
@@ -111,7 +120,7 @@ local markup = lain.util.markup
 -- Textclock
 os.setlocale(os.getenv("LANG")) -- to localize the clock
 local clockicon = wibox.widget.imagebox(theme.widget_clock)
-local mytextclock = wibox.widget.textclock(markup("#ffffff", "%A %d %B ") .. markup("#ab7367", ">") .. markup("#ffffff", " %H:%M "))
+local mytextclock = wibox.widget.textclock(markup("#ffffff", "%A %d %B ") .. markup("#ab7367", "|") .. markup("#ffffff", " %H:%M "))
 local tztextclock = wibox.widget.textclock(markup("#ab7367", "|") .. markup("#ffffff", " %H:%M CDT "), 60, "America/Chicago")
 mytextclock.font = theme.font
 tztextclock.font = theme.font
@@ -127,67 +136,10 @@ theme.cal = lain.widget.cal({
 })
 
 -- Weather
-local weathericon = wibox.widget.imagebox(theme.widget_weather)
-theme.weather = lain.widget.weather({
-    city_id = 2643743, -- placeholder (London)
-    notification_preset = { font = "Terminus 10", fg = theme.fg_normal },
-    weather_na_markup = markup.fontfg(theme.font, "#eca4c4", "N/A "),
-    settings = function()
-        descr = weather_now["weather"][1]["description"]:lower()
-        units = math.floor(weather_now["main"]["temp"])
-        widget:set_markup(markup.fontfg(theme.font, "#eca4c4", descr .. " @ " .. units .. "°C "))
-    end
-})
-
--- / fs
---[[ commented because it needs Gio/Glib >= 2.54
-local fsicon = wibox.widget.imagebox(theme.widget_fs)
-theme.fs = lain.widget.fs({
-    notification_preset = { font = "Terminus 10", fg = theme.fg_normal },
-    settings  = function()
-        widget:set_markup(markup.fontfg(theme.font, "#80d9d8", string.format("%.1f", fs_now["/"].used) .. "% "))
-    end
-})
---]]
-
--- Mail IMAP check
---[[ commented because it needs to be set before use
-local mailicon = wibox.widget.imagebox()
-theme.mail = lain.widget.imap({
-    timeout  = 180,
-    server   = "server",
-    mail     = "mail",
-    password = "keyring get mail",
-    settings = function()
-        if mailcount > 0 then
-            mailicon:set_image(theme.widget_mail)
-            widget:set_markup(markup.fontfg(theme.font, "#cccccc", mailcount .. " "))
-        else
-            widget:set_text("")
-            --mailicon:set_image() -- not working in 4.0
-            mailicon._private.image = nil
-            mailicon:emit_signal("widget::redraw_needed")
-            mailicon:emit_signal("widget::layout_changed")
-        end
-    end
-})
---]]
+local weather_widget = require("awesome-wm-widgets.weather-widget.weather")
 
 -- CPU
 local cpuicon = wibox.widget.imagebox(theme.widget_cpu)
-local cpu = lain.widget.cpu({
-    settings = function()
-        widget:set_markup(markup.fontfg(theme.font, "#e33a6e", cpu_now.usage .. "% "))
-    end
-})
-
--- Coretemp
-local tempicon = wibox.widget.imagebox(theme.widget_temp)
-local temp = lain.widget.temp({
-    settings = function()
-        widget:set_markup(markup.fontfg(theme.font, "#f1af5f", coretemp_now .. "°C "))
-    end
-})
 
 -- Battery
 local baticon = wibox.widget.imagebox(theme.widget_batt)
@@ -221,12 +173,6 @@ local netdowninfo = wibox.widget.textbox()
 local netupicon = wibox.widget.imagebox(theme.widget_netup)
 local netupinfo = lain.widget.net({
     settings = function()
-        if iface ~= "network off" and
-           string.match(theme.weather.widget.text, "N/A")
-        then
-            theme.weather.update()
-        end
-
         widget:set_markup(markup.fontfg(theme.font, "#e54c62", net_now.sent .. " "))
         netdowninfo:set_markup(markup.fontfg(theme.font, "#87af5f", net_now.received .. " "))
     end
@@ -241,36 +187,41 @@ local memory = lain.widget.mem({
 })
 
 -- MPD
-local mpdicon = wibox.widget.imagebox()
-theme.mpd = lain.widget.mpd({
-    settings = function()
-        mpd_notification_preset = {
-            text = string.format("%s [%s] - %s\n%s", mpd_now.artist,
-                   mpd_now.album, mpd_now.date, mpd_now.title)
-        }
+-- local mpdicon = wibox.widget.imagebox()
+-- theme.mpd = lain.widget.mpd({
+--     settings = function()
+--         mpd_notification_preset = {
+--             text = string.format("%s [%s] - %s\n%s", mpd_now.artist,
+--                    mpd_now.album, mpd_now.date, mpd_now.title)
+--         }
+--
+--         if mpd_now.state == "play" then
+--             artist = mpd_now.artist .. " > "
+--             title  = mpd_now.title .. " "
+--             mpdicon:set_image(theme.widget_note_on)
+--         elseif mpd_now.state == "pause" then
+--             artist = "mpd "
+--             title  = "paused "
+--         else
+--             artist = ""
+--             title  = ""
+--             --mpdicon:set_image() -- not working in 4.0
+--             mpdicon._private.image = nil
+--             mpdicon:emit_signal("widget::redraw_needed")
+--             mpdicon:emit_signal("widget::layout_changed")
+--         end
+--         widget:set_markup(markup.fontfg(theme.font, "#e54c62", artist) .. markup.fontfg(theme.font, "#b2b2b2", title))
+--     end
+-- })
 
-        if mpd_now.state == "play" then
-            artist = mpd_now.artist .. " > "
-            title  = mpd_now.title .. " "
-            mpdicon:set_image(theme.widget_note_on)
-        elseif mpd_now.state == "pause" then
-            artist = "mpd "
-            title  = "paused "
-        else
-            artist = ""
-            title  = ""
-            --mpdicon:set_image() -- not working in 4.0
-            mpdicon._private.image = nil
-            mpdicon:emit_signal("widget::redraw_needed")
-            mpdicon:emit_signal("widget::layout_changed")
-        end
-        widget:set_markup(markup.fontfg(theme.font, "#e54c62", artist) .. markup.fontfg(theme.font, "#b2b2b2", title))
-    end
-})
+local cpu_widget = require("awesome-wm-widgets.cpu-widget.cpu-widget")
+local todo_widget = require("awesome-wm-widgets.todo-widget.todo")
+local micwidget_builder = require("awmic")
+micobj = micwidget_builder({font="Iosevka" .. " " .. 20})
 
 function theme.at_screen_connect(s)
     -- Quake application
-    s.quake = lain.util.quake({ app = awful.util.terminal })
+    -- s.quake = lain.util.quake({ app = awful.util.terminal })
 
     -- If wallpaper is a function, call it with the screen
     local wallpaper = theme.wallpaper
@@ -283,7 +234,7 @@ function theme.at_screen_connect(s)
     awful.tag(awful.util.tagnames, s, awful.layout.layouts)
 
     -- Create a promptbox for each screen
-    s.mypromptbox = awful.widget.prompt()
+    -- s.mypromptbox = awful.widget.prompt()
     -- Create an imagebox widget which will contains an icon indicating which layout we're using.
     -- We need one layoutbox per screen.
     s.mylayoutbox = awful.widget.layoutbox(s)
@@ -307,9 +258,8 @@ function theme.at_screen_connect(s)
         layout = wibox.layout.align.horizontal,
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
-            --s.mylayoutbox,
             s.mytaglist,
-            s.mypromptbox,
+            -- s.mypromptbox,
             --mpdicon,
             --theme.mpd.widget,
         },
@@ -318,29 +268,42 @@ function theme.at_screen_connect(s)
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
             wibox.widget.systray(),
-            --mailicon,
-            --theme.mail.widget,
             netdownicon,
             netdowninfo,
             netupicon,
             netupinfo.widget,
+            micobj,
             volicon,
             theme.volume.widget,
             memicon,
             memory.widget,
             cpuicon,
-            cpu.widget,
-            --fsicon,
-            --theme.fs.widget,
-            --weathericon,
-            --theme.weather.widget,
-            tempicon,
-            temp.widget,
+            cpu_widget {
+              width = 70,
+              step_width = 2,
+              step_spacing = 0,
+              color = '#d42f69',
+              enable_kill_button = true
+            },
             baticon,
             bat.widget,
+            --weathericon,
+            weather_widget({
+              api_key='21d619893ab3cefe614502874e68e227',
+              coordinates = {53.893009, 27.567444},
+              time_format_12h = true,
+              units = 'metric',
+              both_units_widget = false,
+              font_name = 'Iosevka',
+              icons = 'weather-underground-icons',
+              icons_extension = '.png',
+              show_hourly_forecast = true,
+              show_daily_forecast = true,
+            }),
             clockicon,
             mytextclock,
             tztextclock,
+            todo_widget(),
             s.mylayoutbox,
         },
     }
